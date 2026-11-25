@@ -24,24 +24,96 @@ jobs:
           mkdir -p output
           blender -b --python-expr "
           import bpy, math
+
           bpy.ops.wm.read_factory_settings(use_empty=True)
-          bpy.ops.object.text_add(location=(0,0,0))
+
+          # 1. World Lighting Cerah Elegan (Dark Blueish Slate)
+          world = bpy.data.worlds.new('World')
+          bpy.context.scene.world = world
+          world.use_nodes = True
+          bg = world.node_tree.nodes.get('Background')
+          if bg:
+              bg.inputs[0].default_value = (0.05, 0.08, 0.14, 1.0)
+              bg.inputs[1].default_value = 1.0
+
+          # 2. Teks Utama 'PADUKA SAMBAS'
+          bpy.ops.object.text_add(location=(0, 0, 0.2))
           txt = bpy.context.active_object
+          txt.name = 'TextPaduka'
           txt.data.body = 'PADUKA SAMBAS'
           txt.data.align_x = 'CENTER'
           txt.data.align_y = 'CENTER'
-          txt.data.extrude = 0.2
+          txt.data.extrude = 0.15
+          txt.data.bevel_depth = 0.02
+          txt.data.bevel_resolution = 4
           txt.rotation_euler = (math.radians(90), 0, 0)
-          bpy.ops.object.light_add(type='SUN', location=(5,-5,10))
-          bpy.ops.object.camera_add(location=(0,-6,0.5))
+
+          # Subtitle '3D CLOUD STUDIO'
+          bpy.ops.object.text_add(location=(0, -0.1, -0.65))
+          sub = bpy.context.active_object
+          sub.name = 'TextSub'
+          sub.data.body = '3D CLOUD STUDIO'
+          sub.data.size = 0.4
+          sub.data.align_x = 'CENTER'
+          sub.data.align_y = 'CENTER'
+          sub.data.extrude = 0.08
+          sub.data.bevel_depth = 0.01
+          sub.rotation_euler = (math.radians(90), 0, 0)
+
+          # 3. Material Emas Mengkilap (Gold Metallic)
+          mat_gold = bpy.data.materials.new(name='Gold')
+          mat_gold.use_nodes = True
+          bsdf = mat_gold.node_tree.nodes.get('Principled BSDF')
+          if bsdf:
+              bsdf.inputs['Base Color'].default_value = (1.0, 0.78, 0.28, 1.0)
+              bsdf.inputs['Metallic'].default_value = 0.9
+              bsdf.inputs['Roughness'].default_value = 0.15
+          txt.data.materials.append(mat_gold)
+
+          # Material Cyan Cerah untuk Subtitle
+          mat_cyan = bpy.data.materials.new(name='Cyan')
+          mat_cyan.use_nodes = True
+          bsdf_c = mat_cyan.node_tree.nodes.get('Principled BSDF')
+          if bsdf_c:
+              bsdf_c.inputs['Base Color'].default_value = (0.1, 0.85, 0.95, 1.0)
+              bsdf_c.inputs['Metallic'].default_value = 0.8
+              bsdf_c.inputs['Roughness'].default_value = 0.2
+          sub.data.materials.append(mat_cyan)
+
+          # 4. Pencahayaan Studio Terang (Key + Fill + Front)
+          # Front Center Light (Langsung menembak teks agar terbaca jelas)
+          bpy.ops.object.light_add(type='POINT', location=(0, -8, 2))
+          f_light = bpy.context.active_object
+          f_light.data.energy = 3500
+
+          # Key Light (Kanan Atas Emas Hangat)
+          bpy.ops.object.light_add(type='POINT', location=(6, -7, 5))
+          k_light = bpy.context.active_object
+          k_light.data.energy = 4000
+          k_light.data.color = (1.0, 0.92, 0.8)
+
+          # Fill Light (Kiri Biru Lembut)
+          bpy.ops.object.light_add(type='POINT', location=(-6, -7, 4))
+          fill_l = bpy.context.active_object
+          fill_l.data.energy = 2500
+          fill_l.data.color = (0.5, 0.8, 1.0)
+
+          # 5. Kamera Mundur Pas di Tengah (Agar teks terbaca utuh)
+          bpy.ops.object.camera_add(location=(0, -11.5, 0.0))
           cam = bpy.context.active_object
           cam.rotation_euler = (math.radians(90), 0, 0)
           bpy.context.scene.camera = cam
-          bpy.context.scene.render.engine = 'CYCLES'
-          bpy.context.scene.cycles.samples = 16
+
+          # 6. Render Settings
+          scene = bpy.context.scene
+          scene.render.engine = 'CYCLES'
+          scene.cycles.device = 'CPU'
+          scene.cycles.samples = 32
+          scene.render.resolution_x = 1920
+          scene.render.resolution_y = 1080
           bpy.ops.wm.save_as_mainfile(filepath='scene.blend')
           "
-          
+
           # Render frame 1 ke folder output
           blender -b scene.blend -o "output/paduka_sambas_render" -F PNG -f 1
 
