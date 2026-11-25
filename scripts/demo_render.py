@@ -1,45 +1,56 @@
 ﻿import bpy
 import math
-import sys
 import os
 
-print("=== Menjalankan Script Blender 3D Paduka Sambas ===")
+print("=== START BLENDER SCRIPT PADUKA SAMBAS ===")
 
-# Buat direktori output
-output_dir = os.path.join(os.getcwd(), "output")
-os.makedirs(output_dir, exist_ok=True)
-output_path = os.path.join(output_dir, "paduka_sambas_render.png")
+# Buat folder output
+cwd = os.getcwd()
+out_dir = os.path.join(cwd, "output")
+os.makedirs(out_dir, exist_ok=True)
+out_file = os.path.join(out_dir, "paduka_sambas.png")
 
-# Reset scene
+print(f"Target Output Path: {out_file}")
+
+# Bersihkan dan buat scene
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
-# Tambahkan Teks 3D
+# Tambahkan Text
 bpy.ops.object.text_add(location=(0, 0, 0))
 txt = bpy.context.active_object
 txt.data.body = "PADUKA SAMBAS"
 txt.data.align_x = 'CENTER'
 txt.data.align_y = 'MIDDLE'
-txt.data.extrude = 0.15
+txt.data.extrude = 0.2
 txt.rotation_euler = (math.radians(90), 0, 0)
 
 # Tambahkan Light
 bpy.ops.object.light_add(type='SUN', location=(5, -5, 10))
-sun = bpy.context.active_object
-sun.data.energy = 5.0
 
-# Tambahkan Kamera
-bpy.ops.object.camera_add(location=(0, -8, 0.5))
+# Tambahkan Camera
+bpy.ops.object.camera_add(location=(0, -6, 0.5))
 cam = bpy.context.active_object
 cam.rotation_euler = (math.radians(90), 0, 0)
 bpy.context.scene.camera = cam
 
-# Set render settings (Gunakan EEVEE / BLENDER_EEVEE_NEXT atau CYCLES CPU sederhana)
+# Set render ke format image langsung
 scene = bpy.context.scene
-scene.render.resolution_x = 1920
-scene.render.resolution_y = 1080
-scene.render.image_settings.file_format = 'PNG'
-scene.render.filepath = output_path
+scene.render.resolution_x = 1280
+scene.render.resolution_y = 720
+scene.render.filepath = out_file
 
-print(f"Render dimulai ke: {output_path}")
+# Render frame
+print("Memanggil bpy.ops.render.render...")
 bpy.ops.render.render(write_still=True)
-print("Render Selesai 100%!")
+
+if os.path.exists(out_file):
+    print(f"BERHASIL: File ditemukan sebesar {os.path.getsize(out_file)} bytes")
+else:
+    print("WARNING: File belum ada, mencoba menyimpan manual...")
+    # Alternatif simpan gambar hasil render
+    img = bpy.data.images.get('Render Result')
+    if img:
+        img.save_render(out_file)
+        print(f"Saved via save_render: {os.path.exists(out_file)}")
+
+print("=== FINISH BLENDER SCRIPT ===")
