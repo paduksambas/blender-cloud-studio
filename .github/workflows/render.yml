@@ -1,0 +1,60 @@
+name: Blender Cloud Studio Runner
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      script_name:
+        description: 'Nama script Python di folder scripts/'
+        required: false
+        default: 'demo_render.py'
+      blend_file:
+        description: 'File .blend di folder blend_files/ (opsional)'
+        required: false
+        default: ''
+      resolution_x:
+        description: 'Lebar Resolusi (px)'
+        required: false
+        default: '1920'
+      resolution_y:
+        description: 'Tinggi Resolusi (px)'
+        required: false
+        default: '1080'
+
+jobs:
+  blender-run:
+    runs-on: ubuntu-latest
+    name: Run Blender in GitHub Cloud
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Blender Environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender libglu1-mesa
+
+      - name: Jalankan Render / Script
+        run: |
+          mkdir -p output
+          SCRIPT="${{ github.event.inputs.script_name || 'demo_render.py' }}"
+          BLEND="${{ github.event.inputs.blend_file }}"
+          RES_X="${{ github.event.inputs.resolution_x || '1920' }}"
+          RES_Y="${{ github.event.inputs.resolution_y || '1080' }}"
+
+          if [ -n "$BLEND" ] && [ -f "blend_files/$BLEND" ]; then
+            blender -b "blend_files/$BLEND" -o "//../output/render_####" -F PNG -f 1
+          elif [ -f "scripts/$SCRIPT" ]; then
+            blender -b --python "scripts/$SCRIPT" -- $RES_X $RES_Y
+          else
+            blender -b --python scripts/demo_render.py -- $RES_X $RES_Y
+          fi
+
+      - name: Upload Hasil Render (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: blender-render-output
+          path: output/
+          retention-days: 14
