@@ -1,4 +1,4 @@
-name: Blender Cloud Studio Runner
+﻿name: Blender Cloud Studio Runner
 
 on:
   push:
@@ -29,7 +29,7 @@ jobs:
           txt = bpy.context.active_object
           txt.data.body = 'PADUKA SAMBAS'
           txt.data.align_x = 'CENTER'
-          txt.data.align_y = 'MIDDLE'
+          txt.data.align_y = 'CENTER'
           txt.data.extrude = 0.2
           txt.rotation_euler = (math.radians(90), 0, 0)
           bpy.ops.object.light_add(type='SUN', location=(5,-5,10))
