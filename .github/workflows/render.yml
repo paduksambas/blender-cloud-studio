@@ -1,4 +1,4 @@
-﻿name: Blender Cloud Studio Runner
+name: Blender Cloud Studio Runner
 
 on:
   push:
@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       script_name:
-        description: 'Nama script Python di folder scripts/ (contoh: demo_render.py)'
+        description: 'Nama script Python di folder scripts/'
         required: false
         default: 'demo_render.py'
       blend_file:
-        description: 'File .blend di folder blend_files/ (opsional jika pakai script)'
+        description: 'File .blend di folder blend_files/ (opsional)'
         required: false
         default: ''
       resolution_x:
@@ -33,13 +33,8 @@ jobs:
 
       - name: Set up Blender Environment
         run: |
-          echo "Memperbarui sistem & menginstall Blender..."
           sudo apt-get update -qq
           sudo apt-get install -y blender libglu1-mesa
-
-      - name: Periksa Versi Blender
-        run: |
-          blender --version
 
       - name: Jalankan Render / Script
         run: |
@@ -49,15 +44,11 @@ jobs:
           RES_X="${{ github.event.inputs.resolution_x || '1920' }}"
           RES_Y="${{ github.event.inputs.resolution_y || '1080' }}"
 
-          echo "Menjalankan Blender Headless Mode..."
           if [ -n "$BLEND" ] && [ -f "blend_files/$BLEND" ]; then
-            echo "Merender file blend: $BLEND"
             blender -b "blend_files/$BLEND" -o "//../output/render_####" -F PNG -f 1
           elif [ -f "scripts/$SCRIPT" ]; then
-            echo "Menjalankan script Python: $SCRIPT"
             blender -b --python "scripts/$SCRIPT" -- $RES_X $RES_Y
           else
-            echo "Menjalankan default script: scripts/demo_render.py"
             blender -b --python scripts/demo_render.py -- $RES_X $RES_Y
           fi
 
@@ -67,8 +58,3 @@ jobs:
           name: blender-render-output
           path: output/
           retention-days: 14
-
-      - name: Status Selesai
-        run: |
-          echo "Render selesai! Hasil gambar/file tersimpan di artifact."
-          ls -la output/
